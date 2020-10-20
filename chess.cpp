@@ -238,6 +238,39 @@ piece_entry* ContainPiece(player* Player, int TileIndex)
 	return Result;
 }
 
+bool CheckValid(std::vector<int> Patterns, 
+				player* Player, player* Opponent, int TileIndex)
+{
+	bool Result = false;
+	for(int i = 0; i < Patterns.size(); ++i)
+	{
+		if(Patterns[i] == TileIndex)
+		{
+			piece_entry* PlayerPiece = ContainPiece(Player, TileIndex);
+			piece_entry* OpponentPiece = ContainPiece(Opponent, TileIndex);
+			
+			if(PlayerPiece)
+			{
+				Result = false;
+				break;
+			}
+			else if(OpponentPiece)
+			{
+				OpponentPiece->Dead = true;
+				Result = true;
+				break;
+			}
+			else 
+			{
+				Result = true;
+				break;
+			}
+		}
+	}
+	
+	return Result;
+}
+
 void UpdatePiece(piece_entry* Piece, chess_board* Board, int NewLocation)
 {
 	Piece->FirstMoveExpired = true;
@@ -343,41 +376,18 @@ bool CheckKnightMove(player* Player, player* Opponent,
 	*/
 	
 	int CurrentLocation = Piece->Location;
-	int Patterns[8];
+	std::vector<int> Patterns;
 	
-	Patterns[0] = CurrentLocation - 10;
-	Patterns[1] = CurrentLocation - 17;
-	Patterns[2] = CurrentLocation - 15;
-	Patterns[3] = CurrentLocation - 6;
-	Patterns[4] = CurrentLocation + 10;
-	Patterns[5] = CurrentLocation + 17;
-	Patterns[6] = CurrentLocation + 15;
-	Patterns[7] = CurrentLocation + 6;
+	Patterns.push_back(CurrentLocation - 10);
+	Patterns.push_back(CurrentLocation - 17);
+	Patterns.push_back(CurrentLocation - 15);
+	Patterns.push_back(CurrentLocation - 6);
+	Patterns.push_back(CurrentLocation + 10);
+	Patterns.push_back(CurrentLocation + 17);
+	Patterns.push_back(CurrentLocation + 15);
+	Patterns.push_back(CurrentLocation + 6);
 	
-	bool Result = false;
-	
-	for(int i = 0; i < ArraySize(Patterns); ++i)
-	{
-		if(Patterns[i] == TileIndex)
-		{
-			piece_entry* PlayerPiece = ContainPiece(Player, TileIndex);
-			piece_entry* OpponentPiece = ContainPiece(Opponent, TileIndex);
-			
-			if(PlayerPiece)
-			{
-				Result = false;
-			}
-			else if(OpponentPiece)
-			{
-				OpponentPiece->Dead = true;
-				Result = true;
-			}
-			else 
-			{
-				Result = true;
-			}
-		}
-	}
+	bool Result = CheckValid(Patterns, Player, Opponent, TileIndex);
 	
 	if(Result) UpdatePiece(Piece, Board, TileIndex);
 	
@@ -575,30 +585,7 @@ bool CheckBishopMove(player* Player, player* Opponent,
 	std::vector<int> Patterns = 
 	GenerateDiagonalPatterns(Player, Opponent, CoordX, CoordY);
 	
-	bool Result = false;
-	
-	for(int i = 0; i < Patterns.size(); ++i)
-	{
-		if(Patterns[i] == TileIndex)
-		{
-			piece_entry* PlayerPiece = ContainPiece(Player, TileIndex);
-			piece_entry* OpponentPiece = ContainPiece(Opponent, TileIndex);
-			
-			if(PlayerPiece)
-			{
-				Result = false;
-			}
-			else if(OpponentPiece)
-			{
-				OpponentPiece->Dead = true;
-				Result = true;
-			}
-			else 
-			{
-				Result = true;
-			}
-		}
-	}
+	bool Result = CheckValid(Patterns, Player, Opponent, TileIndex);
 	
 	if(Result) UpdatePiece(Piece, Board, TileIndex);
 	
@@ -615,30 +602,7 @@ bool CheckRookMove(player* Player, player* Opponent,
 	std::vector<int> Patterns = 
 	GenerateHorVerPatterns(Player, Opponent, CoordX, CoordY);
 	
-	bool Result = false;
-	
-	for(int i = 0; i < Patterns.size(); ++i)
-	{
-		if(Patterns[i] == TileIndex)
-		{
-			piece_entry* PlayerPiece = ContainPiece(Player, TileIndex);
-			piece_entry* OpponentPiece = ContainPiece(Opponent, TileIndex);
-			
-			if(PlayerPiece)
-			{
-				Result = false;
-			}
-			else if(OpponentPiece)
-			{
-				OpponentPiece->Dead = true;
-				Result = true;
-			}
-			else 
-			{
-				Result = true;
-			}
-		}
-	}
+	bool Result = CheckValid(Patterns, Player, Opponent, TileIndex);
 	
 	if(Result) UpdatePiece(Piece, Board, TileIndex);
 	
@@ -660,30 +624,7 @@ bool CheckQueenMove(player* Player, player* Opponent,
 	
 	Patterns.insert(Patterns.end(), PatternsD.begin(), PatternsD.end());
 	
-	bool Result = false;
-	
-	for(int i = 0; i < Patterns.size(); ++i)
-	{
-		if(Patterns[i] == TileIndex)
-		{
-			piece_entry* PlayerPiece = ContainPiece(Player, TileIndex);
-			piece_entry* OpponentPiece = ContainPiece(Opponent, TileIndex);
-			
-			if(PlayerPiece)
-			{
-				Result = false;
-			}
-			else if(OpponentPiece)
-			{
-				OpponentPiece->Dead = true;
-				Result = true;
-			}
-			else 
-			{
-				Result = true;
-			}
-		}
-	}
+	bool Result = CheckValid(Patterns, Player, Opponent, TileIndex);
 	
 	if(Result) UpdatePiece(Piece, Board, TileIndex);
 	
