@@ -7,8 +7,6 @@
 #define CHESS_BOARD_Y 8
 #define MAX_BOARD_SQUARES CHESS_BOARD_X*CHESS_BOARD_Y
 
-#define MAX_CHESS_PIECE 16
-
 enum game_state
 {
 	STATE_PLAYER_BLACK,
@@ -30,6 +28,27 @@ enum piece_value
 	PIECE_QUEEN,
 	PIECE_KING,
 	PIECE_EMPTY,
+};
+
+enum chess_pieces
+{
+	P_PAWN_1,
+	P_PAWN_2,
+	P_PAWN_3,
+	P_PAWN_4,
+	P_PAWN_5,
+	P_PAWN_6,
+	P_PAWN_7,
+	P_PAWN_8,
+	P_ROOK_1,
+	P_KNIGHT_1,
+	P_BISHOP_1,
+	P_QUEEN,
+	P_KING,
+	P_BISHOP_2,
+	P_KNIGHT_2,
+	P_ROOK_2,
+	MAX_CHESS_PIECE,
 };
 
 enum chess_player
@@ -65,6 +84,7 @@ struct player
 	piece_entry PiecesData[16];
 	move_data MoveData;
 	chess_player Color;
+	bool IsChecked;
 };
 
 struct chess_board
@@ -88,5 +108,7 @@ struct chess_game
 	AE_Texture WhitePieces[6];
 	AE_Texture BlackPieces[6];
 };
+
+bool IsSquareUnderCheckmate(player* Player, player* Opponent, int Index);
 
 #endif

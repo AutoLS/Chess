@@ -44,19 +44,20 @@ void InitPlayers(chess_game* Chess)
 	player* White = &Chess->White;
 	player* Black = &Chess->Black;
 
-	Black->PiecesData[0] = {PIECE_ROOK, 0, PLAYER_BLACK};
-	Black->PiecesData[1] = {PIECE_KNIGHT, 1, PLAYER_BLACK};
-	Black->PiecesData[2] = {PIECE_BISHOP, 2, PLAYER_BLACK};
-	Black->PiecesData[3] = {PIECE_QUEEN, 3, PLAYER_BLACK};
-	Black->PiecesData[4] = {PIECE_KING, 4, PLAYER_BLACK};
-	Black->PiecesData[5] = {PIECE_BISHOP, 5, PLAYER_BLACK};
-	Black->PiecesData[6] = {PIECE_KNIGHT, 6, PLAYER_BLACK};
-	Black->PiecesData[7] = {PIECE_ROOK, 7, PLAYER_BLACK};
-	
-	for(int i = 8; i < 16; ++i)
+	for(int i = 0; i < 8; ++i)
 	{
-		Black->PiecesData[i] = {PIECE_PAWN, (uint8)i, PLAYER_BLACK};
+		Black->PiecesData[i] = {PIECE_PAWN, (uint8)(i+8), PLAYER_BLACK};
 	}
+	
+	Black->PiecesData[8] = {PIECE_ROOK, 0, PLAYER_BLACK};
+	Black->PiecesData[9] = {PIECE_KNIGHT, 1, PLAYER_BLACK};
+	Black->PiecesData[10] = {PIECE_BISHOP, 2, PLAYER_BLACK};
+	Black->PiecesData[11] = {PIECE_QUEEN, 3, PLAYER_BLACK};
+	Black->PiecesData[12] = {PIECE_KING, 4, PLAYER_BLACK};
+	Black->PiecesData[13] = {PIECE_BISHOP, 5, PLAYER_BLACK};
+	Black->PiecesData[14] = {PIECE_KNIGHT, 6, PLAYER_BLACK};
+	Black->PiecesData[15] = {PIECE_ROOK, 7, PLAYER_BLACK};
+	
 	
 	Black->Color = PLAYER_BLACK;
 	
@@ -651,6 +652,13 @@ bool CastleRight(player* Player, player* Opponent,
 				IsBlock = true;
 				break;
 			}
+			
+			if(IsSquareUnderCheckmate(Player, Opponent, Index))
+			{
+				IsBlock = true;
+				break;
+			}
+			
 			++x;
 		}
 		
@@ -693,6 +701,12 @@ bool CastleLeft(player* Player, player* Opponent,
 				IsBlock = true;
 				break;
 			}
+			
+			if(IsSquareUnderCheckmate(Player, Opponent, Index))
+			{
+				IsBlock = true;
+				break;
+			}	
 			--x;
 		}
 		
@@ -842,12 +856,216 @@ bool CheckLegalMove(chess_game* Chess, int TileIndex, int PieceIndex)
 	return false;
 }
 
+bool IsSquareUnderCheckmate(player* Player, player* Opponent, int Index)
+{
+	//TODO: Make a function for the loop in each control state since it's litterally the same
+	int KingP = Index;
+	
+	std::vector<int> PossibleCheck;
+	for(int PieceValue = PIECE_PAWN; PieceValue < PIECE_EMPTY; ++PieceValue)
+	{
+		switch(PieceValue)
+		{
+			case PIECE_PAWN:
+			{
+				if(Player->Color == PLAYER_WHITE)
+				{
+					PossibleCheck.push_back(KingP - 7);
+					PossibleCheck.push_back(KingP - 9);
+				}
+				else
+				{
+					PossibleCheck.push_back(KingP + 7);
+					PossibleCheck.push_back(KingP + 9);
+				}
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, PossibleCheck[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+			case PIECE_KNIGHT:
+			{
+				if(Player->Color == PLAYER_WHITE)
+				{
+					PossibleCheck.push_back(KingP - 10);
+					PossibleCheck.push_back(KingP - 17);
+					PossibleCheck.push_back(KingP - 15);
+					PossibleCheck.push_back(KingP - 6);
+				}
+				else
+				{
+					PossibleCheck.push_back(KingP + 10);
+					PossibleCheck.push_back(KingP + 17);
+					PossibleCheck.push_back(KingP + 15);
+					PossibleCheck.push_back(KingP + 6);
+				}
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, PossibleCheck[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+			case PIECE_BISHOP:
+			{
+				int CoordX = KingP % 8;
+				int CoordY = KingP / 8;
+				PossibleCheck = 
+				GenerateDiagonalPatterns(Player, Opponent, CoordX, CoordY);
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, PossibleCheck[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+			case PIECE_ROOK:
+			{
+				int CoordX = KingP % 8;
+				int CoordY = KingP / 8;
+				
+				PossibleCheck = 
+				GenerateHorVerPatterns(Player, Opponent, CoordX, CoordY);
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, PossibleCheck[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+			
+			case PIECE_QUEEN:
+			{
+				int CoordX = KingP % 8;
+				int CoordY = KingP / 8;
+				
+				std::vector<int> P1 =
+				GenerateHorVerPatterns(Player, Opponent, CoordX, CoordY);
+				
+				std::vector<int> P2 =
+				GenerateDiagonalPatterns(Player, Opponent, CoordX, CoordY);
+				
+				P1.insert(P1.end(), P2.begin(), P2.end());
+				
+				for(int i = 0; i < P1.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, P1[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+			
+			case PIECE_KING:
+			{
+				if(Player->Color == PLAYER_WHITE)
+				{
+					PossibleCheck.push_back(KingP - 9);
+					PossibleCheck.push_back(KingP - 8);
+					PossibleCheck.push_back(KingP - 7);
+				}
+				else
+				{
+					PossibleCheck.push_back(KingP + 9);
+					PossibleCheck.push_back(KingP + 8);
+					PossibleCheck.push_back(KingP + 7);
+				}
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					piece_entry* Piece = ContainPiece(Opponent, PossibleCheck[i]);
+					if(Piece)
+					{
+						if(Piece->Value == PieceValue)
+						{
+							return true;
+						}
+					}
+				}
+			} break;
+		}
+		
+		PossibleCheck.clear();
+	}
+	
+	return false;
+}
+
+bool IsCheckmate(player* Player, player* Opponent)
+{
+	int OpponentKingP = Opponent->PiecesData[P_KING].Location;
+	for(int i = 0; i < MAX_CHESS_PIECE; ++i)
+	{
+		piece_entry* Piece = &Player->PiecesData[i];
+		switch(Piece->Value)
+		{
+			case PIECE_PAWN:
+			{
+				std::vector<int> PossibleCheck;
+				if(Opponent->Color == PLAYER_WHITE)
+				{
+					PossibleCheck.push_back(OpponentKingP - 7);
+					PossibleCheck.push_back(OpponentKingP - 9);
+				}
+				else
+				{
+					PossibleCheck.push_back(OpponentKingP + 7);
+					PossibleCheck.push_back(OpponentKingP + 9);
+				}
+				
+				for(int i = 0; i < PossibleCheck.size(); ++i)
+				{
+					if(Piece->Location == PossibleCheck[i])
+					{
+						return true;
+					}
+				}
+			} break;
+		}
+	}
+	
+	return false;
+}
+
 void PlayerMove(AE_Input* Input, chess_game* Chess)
 {
 	chess_board* Board = &Chess->Board;
 	player* Player = Chess->State == STATE_PLAYER_WHITE ? 
 					 &Chess->White : &Chess->Black;
 		
+	player* Opponent = Chess->State == STATE_PLAYER_WHITE ? 
+					   &Chess->Black : &Chess->White;	
+	
 	Player->MoveData.Movable.Result = false;	
 		
 	switch(Player->MoveData.State)
@@ -898,8 +1116,13 @@ void PlayerMove(AE_Input* Input, chess_game* Chess)
 						
 						printf("%c_%c%d\n", c, l, n);
 #if 1
+						if(IsSquareUnderCheckmate(Opponent, Player, Opponent->PiecesData[P_KING].Location))
+						{
+							printf("Check\n");
+						}
 						Chess->State = Chess->State == STATE_PLAYER_WHITE ? 
 									   STATE_PLAYER_BLACK : STATE_PLAYER_WHITE;
+									   
 #endif
 					}
 					else
